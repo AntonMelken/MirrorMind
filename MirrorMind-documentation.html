@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MirrorMind — Product Documentation v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #0f0f18;
+    --bg3: #14141f;
+    --surface: #1a1a2e;
+    --surface2: #1f1f35;
+    --border: #2a2a45;
+    --border2: #353558;
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --accent3: #38bdf8;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e8e8f0;
+    --text2: #a0a0c0;
+    --text3: #606080;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+    --body: 'Lora', serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE TEXTURE ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 280px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 40px 0;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .sidebar-logo {
+    padding: 32px 28px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .sidebar-logo .logo-mark {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .sidebar-logo .logo-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .sidebar-version {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent2);
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-top: 8px;
+  }
+
+  .nav-section {
+    padding: 8px 16px 4px;
+  }
+
+  .nav-section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 12px;
+    margin-bottom: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text2);
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+
+  .nav-item:hover {
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(167,139,250,0.1));
+    color: var(--accent2);
+    border: 1px solid rgba(108,99,255,0.3);
+  }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border2);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .nav-item.active .nav-dot { background: var(--accent); }
+  .nav-item:hover .nav-dot { background: var(--text3); }
+
+  /* ─── MAIN ─── */
+  .main {
+    margin-left: 280px;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding: 80px 80px 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(108,99,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 200px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    display: block;
+    width: 30px; height: 1px;
+    background: var(--accent);
+  }
+
+  .hero h1 {
+    font-family: var(--display);
+    font-size: 58px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 .gradient-text {
+    background: linear-gradient(135deg, var(--accent2) 0%, var(--accent3) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-desc {
+    font-size: 18px;
+    color: var(--text2);
+    max-width: 600px;
+    line-height: 1.7;
+    margin-bottom: 36px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  .meta-value {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .meta-value.accent { color: var(--accent2); }
+  .meta-value.green { color: var(--green); }
+
+  /* ─── SECTION ─── */
+  .section {
+    padding: 72px 80px;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 48px;
+  }
+
+  .section-number {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    background: rgba(108,99,255,0.1);
+    border: 1px solid rgba(108,99,255,0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  .section-title {
+    font-family: var(--display);
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .section-subtitle {
+    color: var(--text2);
+    margin-top: 8px;
+    font-size: 16px;
+  }
+
+  /* ─── CARDS ─── */
+  .card-grid {
+    display: grid;
+    gap: 20px;
+  }
+
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--border2);
+    transform: translateY(-2px);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .card h3 {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .card p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+
+  /* ─── FEATURE TABLE ─── */
+  .feature-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .feature-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .feature-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .feature-table tr:last-child td { border-bottom: none; }
+
+  .feature-table tr:hover td { background: var(--surface2); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  .badge-free { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-premium { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-tech { background: rgba(56,189,248,0.15); color: var(--accent3); border: 1px solid rgba(56,189,248,0.3); }
+  .badge-privacy { background: rgba(167,139,250,0.15); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
+
+  /* ─── CODE BLOCK ─── */
+  .code-block {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 24px 0;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .code-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 1px;
+  }
+
+  .code-dots { display: flex; gap: 6px; }
+  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-dot:nth-child(1) { background: #ef4444; }
+  .code-dot:nth-child(2) { background: #f59e0b; }
+  .code-dot:nth-child(3) { background: #10b981; }
+
+  pre {
+    padding: 24px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text2);
+  }
+
+  .kw { color: #c678dd; }
+  .str { color: #98c379; }
+  .num { color: #d19a66; }
+  .fn { color: #61afef; }
+  .cm { color: #5c6370; font-style: italic; }
+  .prop { color: #e06c75; }
+
+  /* ─── FLOW DIAGRAM ─── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 32px 0;
+  }
+
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    min-width: 160px;
+    text-align: center;
+    position: relative;
+  }
+
+  .flow-step-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+
+  .flow-step-title {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .flow-step-desc {
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.4;
+  }
+
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--border2);
+    padding: 0 12px;
+    flex-shrink: 0;
+  }
+
+  /* ─── USER STORY ─── */
+  .story-block {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 24px 28px;
+    margin: 20px 0;
+  }
+
+  .story-persona {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+
+  .story-text {
+    font-size: 15px;
+    color: var(--text);
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  /* ─── SPEC LIST ─── */
+  .spec-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .spec-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-size: 15px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .spec-list li::before {
+    content: '→';
+    font-family: var(--mono);
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ─── ALERT ─── */
+  .alert {
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .alert-info {
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.25);
+  }
+
+  .alert-warning {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+  }
+
+  .alert-success {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.25);
+  }
+
+  .alert-icon { font-size: 20px; flex-shrink: 0; }
+
+  .alert-content {
+    flex: 1;
+  }
+
+  .alert-title {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .alert-info .alert-title { color: var(--accent3); }
+  .alert-warning .alert-title { color: var(--gold); }
+  .alert-success .alert-title { color: var(--green); }
+
+  .alert-text {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.55;
+  }
+
+  /* ─── COMPARISON TABLE ─── */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 28px 0;
+  }
+
+  .comparison-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .comparison-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .comparison-header.free { border-top: 3px solid var(--green); }
+  .comparison-header.premium { border-top: 3px solid var(--gold); }
+
+  .comparison-plan {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .comparison-price {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  .comparison-items {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .comparison-item {
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text2);
+    align-items: flex-start;
+  }
+
+  .check { color: var(--green); flex-shrink: 0; }
+  .cross { color: var(--red); flex-shrink: 0; }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 36px 0;
+  }
+
+  /* ─── TECH STACK ─── */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 28px 0;
+  }
+
+  .stack-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .stack-item:hover { border-color: var(--accent); }
+
+  .stack-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .stack-name {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .stack-role {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+  }
+
+  .stack-cost {
+    margin-top: 8px;
+  }
+
+  /* ─── TIMELINE ─── */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    margin: 28px 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--border));
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 32px;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -27px;
+    top: 5px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 3px rgba(108,99,255,0.2);
+  }
+
+  .timeline-phase {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+
+  .timeline-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .timeline-desc {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .timeline-duration {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-top: 8px;
+  }
+
+  /* ─── SCREEN MOCKUP ─── */
+  .screens {
+    display: flex;
+    gap: 20px;
+    margin: 32px 0;
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+
+  .screen {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    min-width: 220px;
+    flex-shrink: 0;
+    text-align: center;
+    position: relative;
+  }
+
+  .screen::before {
+    content: '';
+    display: block;
+    width: 40px; height: 4px;
+    background: var(--border2);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .screen-name {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent2);
+  }
+
+  .screen-elements {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .screen-el {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .screen-el.primary {
+    background: rgba(108,99,255,0.15);
+    border-color: rgba(108,99,255,0.4);
+    color: var(--accent2);
+  }
+
+  /* ─── PRIVACY MATRIX ─── */
+  .privacy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 28px 0;
+  }
+
+  .privacy-card {
+    border-radius: 10px;
+    padding: 24px;
+  }
+
+  .privacy-card.local {
+    background: rgba(16,185,129,0.07);
+    border: 1px solid rgba(16,185,129,0.25);
+  }
+
+  .privacy-card.cloud {
+    background: rgba(56,189,248,0.07);
+    border: 1px solid rgba(56,189,248,0.25);
+  }
+
+  .privacy-card-title {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .privacy-card.local .privacy-card-title { color: var(--green); }
+  .privacy-card.cloud .privacy-card-title { color: var(--accent3); }
+
+  .privacy-item {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+
+  /* ─── HEADING STYLES ─── */
+  h2 {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    margin: 36px 0 16px;
+    letter-spacing: -0.3px;
+  }
+
+  h3 {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 700;
+    margin: 24px 0 12px;
+    color: var(--accent2);
+  }
+
+  p { margin-bottom: 16px; font-size: 15px; color: var(--text2); line-height: 1.7; }
+
+  strong { color: var(--text); font-weight: 600; }
+
+  /* ─── SCROLLSPY ─── */
+  .toc-progress {
+    position: fixed;
+    top: 0; left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    z-index: 200;
+  }
+
+  .toc-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1200px) {
+    .card-grid-3 { grid-template-columns: 1fr 1fr; }
+    .stack-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .main { margin-left: 0; }
+    .hero { padding: 40px; }
+    .section { padding: 48px 40px; }
+    .hero h1 { font-size: 38px; }
+    .card-grid-2, .card-grid-3 { grid-template-columns: 1fr; }
+    .comparison { grid-template-columns: 1fr; }
+    .stack-grid { grid-template-columns: repeat(2, 1fr); }
+    .privacy-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-tag { animation: fadeInUp 0.6s ease 0.1s both; }
+  .hero h1 { animation: fadeInUp 0.6s ease 0.2s both; }
+  .hero-desc { animation: fadeInUp 0.6s ease 0.3s both; }
+  .hero-meta { animation: fadeInUp 0.6s ease 0.4s both; }
+
+  /* ─── INLINE CODE ─── */
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent2);
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    padding: 48px 80px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+  }
+
+  .footer-brand {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .footer-copy {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+</style>
+</head>
+<body>
+
+<div class="toc-progress">
+  <div class="toc-progress-bar" id="progressBar"></div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">MirrorMind</div>
+    <div class="logo-sub">Product Documentation</div>
+    <div class="sidebar-version">v1.0 — Draft</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item active" href="#vision">
+      <div class="nav-dot"></div> Vision & Ziele
+    </a>
+    <a class="nav-item" href="#users">
+      <div class="nav-dot"></div> Zielgruppe
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Product</div>
+    <a class="nav-item" href="#concept">
+      <div class="nav-dot"></div> Kernkonzept
+    </a>
+    <a class="nav-item" href="#userflow">
+      <div class="nav-dot"></div> User Flow
+    </a>
+    <a class="nav-item" href="#features">
+      <div class="nav-dot"></div> Features
+    </a>
+    <a class="nav-item" href="#screens">
+      <div class="nav-dot"></div> Screen-Übersicht
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">AI & Privacy</div>
+    <a class="nav-item" href="#ai">
+      <div class="nav-dot"></div> AI-Modell
+    </a>
+    <a class="nav-item" href="#privacy">
+      <div class="nav-dot"></div> Datenschutz (DSGVO)
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Business</div>
+    <a class="nav-item" href="#monetization">
+      <div class="nav-dot"></div> Monetarisierung
+    </a>
+    <a class="nav-item" href="#retention">
+      <div class="nav-dot"></div> Retention-Strategie
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Engineering</div>
+    <a class="nav-item" href="#tech">
+      <div class="nav-dot"></div> Tech Stack
+    </a>
+    <a class="nav-item" href="#architecture">
+      <div class="nav-dot"></div> Architektur
+    </a>
+    <a class="nav-item" href="#roadmap">
+      <div class="nav-dot"></div> Roadmap
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">Product Requirements Document</div>
+    <h1>
+      <span class="gradient-text">MirrorMind</span><br>
+      Der AI der dich<br>wirklich kennt.
+    </h1>
+    <p class="hero-desc">
+      Ein persönlicher AI-Begleiter der täglich zuhört, Muster erkennt und dem Nutzer Dinge über sich selbst zeigt, die er selbst nicht sieht. Aufgebaut auf echtem Vertrauen — keine Manipulation, keine künstliche Abhängigkeit.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">Platform</span>
+        <span class="meta-value accent">iOS (SwiftUI)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">MVP Aufwand</span>
+        <span class="meta-value">4–6 Wochen</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Startkapital</span>
+        <span class="meta-value green">0 €</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Datenschutz</span>
+        <span class="meta-value accent">DSGVO-konform</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Status</span>
+        <span class="meta-value">Pre-Development</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 1. VISION ─── -->
+  <section class="section" id="vision">
+    <div class="section-header">
+      <span class="section-number">01</span>
+      <div>
+        <div class="section-title">Vision & Ziele</div>
+        <div class="section-subtitle">Was wir bauen und warum es existieren soll</div>
+      </div>
+    </div>
+
+    <p>Die meisten Habit- und Journal-Apps sterben nach drei Tagen, weil sie ein fundamentales Problem haben: Der Nutzer gibt Daten rein und bekommt <strong>nichts Bedeutungsvolles zurück</strong>. Es ist wie in ein schwarzes Loch zu schreiben.</p>
+
+    <p>MirrorMind löst das durch einen einfachen Mechanismus: <strong>Der AI erinnert sich, antwortet, und zeigt dir Dinge über dich selbst die du nicht wusstest.</strong> Nach 30 Tagen hat die App das Gedächtnis des Nutzers. Das löscht man nicht.</p>
+
+    <div class="card-grid card-grid-3" style="margin-top:32px;">
+      <div class="card">
+        <span class="card-icon">🪞</span>
+        <h3>Der ehrliche Spiegel</h3>
+        <p>MirrorMind zeigt dem Nutzer Muster die er selbst nicht sieht — aus seinen eigenen Worten, ohne ihn zu manipulieren.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔒</span>
+        <h3>Vertrauen als Produkt</h3>
+        <p>Die App verdient nicht durch Manipulation. Sie verdient weil der Nutzer echten Wert bekommt und seine Daten wirklich sicher sind.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📈</span>
+        <h3>Compounding Value</h3>
+        <p>Die App wird mit jedem Tag wertvoller. Nach einem Monat ist sie zehnmal nützlicher als nach einer Woche — weil sie dich kennt.</p>
+      </div>
+    </div>
+
+    <h2>Die eine Kernaussage</h2>
+    <div class="story-block">
+      <div class="story-persona">Product Statement</div>
+      <div class="story-text">"MirrorMind ist der einzige AI dem du vertrauen kannst — weil er nie deine Daten verkauft, dich nie manipuliert, und mit jeder Woche ehrlicher zu dir wird als jeder Mensch der dich kennt."</div>
+    </div>
+
+    <h2>Was wir ausdrücklich nicht bauen</h2>
+    <ul class="spec-list">
+      <li>Keine künstliche Sucht durch variable Belohnungen oder Loss-Aversion-Manipulation</li>
+      <li>Keine App die den Selbstwert des Nutzers kontrolliert oder an einen Score koppelt</li>
+      <li>Keine Weitergabe von Nutzerdaten an Dritte — auch nicht anonymisiert</li>
+      <li>Keine medizinischen Claims oder therapeutischen Versprechen</li>
+      <li>Kein Training des AI-Modells auf Basis von Nutzerdaten</li>
+    </ul>
+  </section>
+
+  <!-- ─── 2. ZIELGRUPPE ─── -->
+  <section class="section" id="users">
+    <div class="section-header">
+      <span class="section-number">02</span>
+      <div>
+        <div class="section-title">Zielgruppe</div>
+        <div class="section-subtitle">Wer kauft das — und warum</div>
+      </div>
+    </div>
+
+    <div class="card-grid card-grid-2">
+      <div class="card">
+        <span class="card-icon">💼</span>
+        <h3>Primäre Zielgruppe</h3>
+        <p><strong>25–38 Jahre, berufstätig, ehrgeizig.</strong> Menschen die wachsen wollen, aber keine Zeit für stundenlanges Journaling haben. Sie sind bereit für einen Premium-Service wenn er echten Wert liefert. Typische Apps die sie kennen: Day One, Notion, Headspace.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🎓</span>
+        <h3>Sekundäre Zielgruppe</h3>
+        <p><strong>19–26 Jahre, Studenten & Young Professionals.</strong> Digitally native, sicherheitsbewusst, skeptisch gegenüber Datenkraken. Sie empfehlen gute Apps aktiv weiter — das ist der virale Kanal.</p>
+      </div>
+    </div>
+
+    <h2>User Stories — die realen Probleme</h2>
+
+    <div class="story-block">
+      <div class="story-persona">Persona A — Marco, 31, Product Manager</div>
+      <div class="story-text">"Ich habe dreimal angefangen, ein Journal zu führen. Jedes Mal nach einer Woche aufgehört. Mir fehlt jemand der mich fragt — nicht ein leeres Feld das wartet."</div>
+    </div>
+
+    <div class="story-block">
+      <div class="story-persona">Persona B — Sarah, 27, Freelancerin</div>
+      <div class="story-text">"Ich merke dass ich mich im Kreis drehe. Dieselben Entscheidungsmuster, dieselben Fehler. Ich will jemanden der das sieht und mir ehrlich sagt was er sieht."</div>
+    </div>
+
+    <div class="story-block">
+      <div class="story-persona">Persona C — Leon, 23, Student</div>
+      <div class="story-text">"Ich würde niemals meine Gedanken in eine App schreiben die sie weiterverkauft. Wenn die App wirklich privat wäre — und mir trotzdem echte Insights gibt — würde ich sofort bezahlen."</div>
+    </div>
+  </section>
+
+  <!-- ─── 3. KERNKONZEPT ─── -->
+  <section class="section" id="concept">
+    <div class="section-header">
+      <span class="section-number">03</span>
+      <div>
+        <div class="section-title">Kernkonzept</div>
+        <div class="section-subtitle">Die Mechanik die alles zusammenhält</div>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <div class="alert-icon">💡</div>
+      <div class="alert-content">
+        <div class="alert-title">Der fundamentale Unterschied zu anderen Journal-Apps</div>
+        <div class="alert-text">Der Nutzer schreibt nicht ins Leere. Der AI antwortet mit einer personalisierten Frage die auf dem basiert was er gestern gesagt hat. Das fühlt sich nicht wie Journaling an — es fühlt sich an wie ein Gespräch mit jemandem der sich erinnert hat.</div>
+      </div>
+    </div>
+
+    <h2>Der tägliche Loop — 3 Schritte</h2>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 01</div>
+        <div class="flow-step-title">Morgen-Push</div>
+        <div class="flow-step-desc">Personalisierte Frage basierend auf gestern. Nicht generisch — spezifisch.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 02</div>
+        <div class="flow-step-title">20s Voice-Antwort</div>
+        <div class="flow-step-desc">Der Nutzer antwortet per Sprache. Kein Tippen, kein Aufwand.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">STEP 03</div>
+        <div class="flow-step-title">AI-Reaktion</div>
+        <div class="flow-step-desc">Kurze, echte Antwort. Validation ohne Manipulation. Frage für morgen gesetzt.</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-num">WÖCHENTLICH</div>
+        <div class="flow-step-title">Muster-Report</div>
+        <div class="flow-step-desc">Insights die der Nutzer selbst nicht gesehen hat. Compounding Value.</div>
+      </div>
+    </div>
+
+    <h2>Warum Menschen nicht aufhören</h2>
+
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <span class="card-icon">🧠</span>
+        <h3>Zeigarnik-Effekt</h3>
+        <p>Die Frage die morgens kommt bleibt den ganzen Tag offen im Kopf. Das Gehirn will offene Loops schließen — der Nutzer öffnet die App.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔍</span>
+        <h3>Neugier auf sich selbst</h3>
+        <p>Menschen sind obsessiv selbstbezogen. "Was hat die AI diese Woche über mich herausgefunden?" ist unwiderstehlich. Spotify Wrapped als täglich.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">💎</span>
+        <h3>Switching Cost</h3>
+        <p>Nach 30 Tagen ist das Leben des Nutzers in der App. Seine Muster. Seine Geschichte. Das löscht man nicht — nicht weil die App es verhindert, sondern weil man nicht will.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 4. USER FLOW ─── -->
+  <section class="section" id="userflow">
+    <div class="section-header">
+      <span class="section-number">04</span>
+      <div>
+        <div class="section-title">User Flow</div>
+        <div class="section-subtitle">Von Download bis bezahlender Nutzer — jeder Schritt</div>
+      </div>
+    </div>
+
+    <h2>Onboarding Flow (First 5 Minuten)</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Screen 1</div>
+        <div class="timeline-title">Splash + Value Prop</div>
+        <div class="timeline-desc">Ein Satz: "Der einzige AI der dich wirklich kennt — und dem du wirklich vertrauen kannst." Kein Feature-Dumping. Ein CTA: "Beginne kostenlos".</div>
+        <span class="timeline-duration">~10 Sekunden</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Screen 2</div>
+        <div class="timeline-title">Datenschutz-Erklärung (Human-Readable)</div>
+        <div class="timeline-desc">Nicht Juristendeutsch. Drei Punkte: 1. "Deine Worte bleiben auf deinem Gerät." 2. "Wir verkaufen nie Daten." 3. "Du kannst alles jederzeit löschen." Aktive Zustimmung per Toggle — kein Dark Pattern.</div>
+        <span class="timeline-duration">~30 Sekunden</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Screen 3</div>
+        <div class="timeline-title">Erste Frage — live erleben</div>
+        <div class="timeline-desc">Keine Registrierung. Sofort: "Was beschäftigt dich gerade am meisten?" Voice-Eingabe mit 60 Sekunden Limit. Der AI antwortet in 3 Sätzen. Das ist das Aha-Erlebnis — jetzt will der Nutzer die App.</div>
+        <span class="timeline-duration">~2 Minuten</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Screen 4</div>
+        <div class="timeline-title">Account erstellen (optional)</div>
+        <div class="timeline-desc">Apple Sign-In oder Email. Hinweis: "Ohne Account funkioniert die App — aber deine Daten sind nur lokal gespeichert. Mit Account synchronisieren wir verschlüsselt in die Cloud." Kein Zwang.</div>
+        <span class="timeline-duration">~1 Minute</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Screen 5</div>
+        <div class="timeline-title">Notification Permission</div>
+        <div class="timeline-desc">Ehrlich erklärt warum: "Morgens schicken wir dir eine Frage. Ohne Notifications verlierst du den Streak und den Kontext. Aber du entscheidest." Kein Druck.</div>
+        <span class="timeline-duration">~20 Sekunden</span>
+      </div>
+    </div>
+
+    <h2>Täglicher Usage Flow</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">07:30–09:00 Uhr</div>
+        <div class="timeline-title">Morgen-Push mit personalisierter Frage</div>
+        <div class="timeline-desc">Basierend auf dem was der Nutzer gestern erwähnt hat. Beispiel: Gestern erwähnte er ein Gespräch mit seinem Chef → Heute: "Wie ist das Gespräch mit deinem Chef gelaufen?" Das fühlt sich wie ein Freund an.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Anytime</div>
+        <div class="timeline-title">Voice-Check-in (20–60 Sekunden)</div>
+        <div class="timeline-desc">Kein Tippen. Hold-to-Record. Der Nutzer antwortet. Transkription passiert lokal (Apple Speech Framework). AI-Zusammenfassung wird generiert.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Sofort</div>
+        <div class="timeline-title">AI-Antwort + Morgenfrage gesetzt</div>
+        <div class="timeline-desc">3–4 Sätze. Acknowledgement + eine echte Beobachtung + Frage für morgen. Kurz. Nie generisch.</div>
+      </div>
+    </div>
+
+    <h2>Conversion Flow (Free → Premium)</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Tag 7</div>
+        <div class="timeline-title">Erste Wochenanalyse — Paywall</div>
+        <div class="timeline-desc">Der erste wöchentliche Pattern-Report wird angeteasert: "Wir haben 3 Muster in deinen Check-ins erkannt." Free-User sehen die Zusammenfassung, aber nicht die Details. Ein Tap zu Premium.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Tag 14</div>
+        <div class="timeline-phase">Soft Reminder</div>
+        <div class="timeline-title">Ohne Aggression</div>
+        <div class="timeline-desc">"Du hast 14 Tage Check-ins gesammelt. Sieh was sie über dich verraten." Kein Countdown-Timer, kein Fear-of-Missing-Out. Echter Value-Pitch.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Tag 30</div>
+        <div class="timeline-title">Monats-Report — stärkster Conversion-Punkt</div>
+        <div class="timeline-desc">Der Monats-Report ist das Spotify Wrapped der App. Personalisiert, visuell, teilbar. Free-User bekommen eine Vorschau. Das ist das Moment wo die meisten upgraden.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 5. FEATURES ─── -->
+  <section class="section" id="features">
+    <div class="section-header">
+      <span class="section-number">05</span>
+      <div>
+        <div class="section-title">Feature Specification</div>
+        <div class="section-subtitle">Was jedes Feature tut, wie es funktioniert, und was bei Edge Cases passiert</div>
+      </div>
+    </div>
+
+    <table class="feature-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Beschreibung</th>
+          <th>Tier</th>
+          <th>Priorität</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Voice Check-in</strong></td>
+          <td>Hold-to-Record, max 90 Sekunden. Lokale Transkription via Apple Speech Framework. Keine Cloud-Übertragung der Rohdaten.</td>
+          <td><span class="badge badge-free">FREE</span></td>
+          <td><span class="badge badge-tech">P0 — MVP</span></td>
+        </tr>
+        <tr>
+          <td><strong>Text Check-in</strong></td>
+          <td>Alternativ zu Voice. Unbegrenzte Länge. Lokal gespeichert in SwiftData.</td>
+          <td><span class="badge badge-free">FREE</span></td>
+          <td><span class="badge badge-tech">P0 — MVP</span></td>
+        </tr>
+        <tr>
+          <td><strong>Personalisierte Tagesfrage</strong></td>
+          <td>AI generiert basierend auf dem letzten Check-in eine spezifische Folgefrage. Push-Notification morgens. Fallback bei erstem Eintrag: generische Starter-Fragen.</td>
+          <td><span class="badge badge-free">FREE</span></td>
+          <td><span class="badge badge-tech">P0 — MVP</span></td>
+        </tr>
+        <tr>
+          <td><strong>AI-Antwort</strong></td>
+          <td>3–4 Sätze nach jedem Check-in. Acknowledgement + Beobachtung + optionale Frage. Generiert via Groq API (kostenlos). Kein Rohdaten-Transfer — nur anonymisierte Zusammenfassung.</td>
+          <td><span class="badge badge-free">FREE</span></td>
+          <td><span class="badge badge-tech">P0 — MVP</span></td>
+        </tr>
+        <tr>
+          <td><strong>30-Tage History</strong></td>
+          <td>Letzten 30 Tage der Check-ins lokal abrufbar. Ältere Einträge werden lokal archiviert, aber nicht analysiert.</td>
+          <td><span class="badge badge-free">FREE</span></td>
+          <td><span class="badge badge-tech">P1</span></td>
+        </tr>
+        <tr>
+          <td><strong>Verhaltens-Profil (intern)</strong></td>
+          <td>Unsichtbar für den Nutzer — AI baut intern ein Modell aus Tonfall, Themen, Energie. Dieses Modell wird verwendet um bessere Fragen zu stellen. Nie direkt angezeigt.</td>
+          <td><span class="badge badge-free">FREE</span></td>
+          <td><span class="badge badge-tech">P1</span></td>
+        </tr>
+        <tr>
+          <td><strong>Wöchentlicher Pattern-Report</strong></td>
+          <td>Jede Woche: 3 Muster aus den Check-ins. "Du hast diese Woche 4x das Wort 'gestresst' verwendet wenn es um Arbeit ging." Nur für Premium sichtbar. Free-User sehen Teaser.</td>
+          <td><span class="badge badge-premium">PREMIUM</span></td>
+          <td><span class="badge badge-tech">P1</span></td>
+        </tr>
+        <tr>
+          <td><strong>Unbegrenzte History</strong></td>
+          <td>Alle Check-ins unbegrenzt zugreifbar und durchsuchbar. Lokal gespeichert + optional Cloud-Backup (verschlüsselt).</td>
+          <td><span class="badge badge-premium">PREMIUM</span></td>
+          <td><span class="badge badge-tech">P1</span></td>
+        </tr>
+        <tr>
+          <td><strong>Monats-Report (Wrapped)</strong></td>
+          <td>Visuell aufbereiteter Monatsrückblick. Teilbar als Bild. Themen, Energie-Kurve, Entwicklungsmomente. Stärkster Retention- & Viral-Mechanismus.</td>
+          <td><span class="badge badge-premium">PREMIUM</span></td>
+          <td><span class="badge badge-tech">P2</span></td>
+        </tr>
+        <tr>
+          <td><strong>Redestil-Analyse</strong></td>
+          <td>"Du kommunizierst direkter wenn du müde bist." "Deine Nachrichten an deinen Chef sind merklich förmlicher." Basierend auf Tonfall-Analyse über Zeit.</td>
+          <td><span class="badge badge-premium">PREMIUM</span></td>
+          <td><span class="badge badge-tech">P2</span></td>
+        </tr>
+        <tr>
+          <td><strong>Encrypted Cloud Backup</strong></td>
+          <td>Opt-in. Daten werden client-seitig verschlüsselt bevor sie Supabase erreichen. Schlüssel liegt beim Nutzer (aus seinem Account-Passwort abgeleitet). Server sieht nur verschlüsselte Blobs.</td>
+          <td><span class="badge badge-premium">PREMIUM</span></td>
+          <td><span class="badge badge-tech">P2</span></td>
+        </tr>
+        <tr>
+          <td><strong>Export (PDF / JSON)</strong></td>
+          <td>Alle Daten als strukturierter Export. Für Therapeuten, persönliche Archivierung, oder Wechsel zu anderer App. Immer verfügbar — auch nach Abo-Ende.</td>
+          <td><span class="badge badge-free">FREE</span></td>
+          <td><span class="badge badge-tech">P2</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert alert-warning" style="margin-top:32px;">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <div class="alert-title">Edge Cases die implementiert sein müssen vor Launch</div>
+        <div class="alert-text">Kein Internet: App funktioniert vollständig offline. Check-ins werden lokal gespeichert, AI-Antwort wird nachgeliefert wenn Verbindung zurückkommt. — Kein Mikrofon-Zugriff: Fallback auf Text-Eingabe, keine Fehlermeldung ohne Erklärung. — API-Limit erreicht (Groq Free Tier): Lokaler Fallback mit gespeicherten generischen Antworten. Nutzer wird nicht konfrontiert damit. — Abo läuft ab: Kein Feature verschwindet sofort. 7 Tage Grace Period. Daten bleiben immer zugänglich.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 6. SCREENS ─── -->
+  <section class="section" id="screens">
+    <div class="section-header">
+      <span class="section-number">06</span>
+      <div>
+        <div class="section-title">Screen-Übersicht</div>
+        <div class="section-subtitle">Alle Screens der App und ihre Kernelemente</div>
+      </div>
+    </div>
+
+    <div class="screens">
+      <div class="screen">
+        <div class="screen-name">01 — Home</div>
+        <div class="screen-elements">
+          <div class="screen-el primary">Tagesfrage (AI-generiert)</div>
+          <div class="screen-el primary">🎙 Hold to Record</div>
+          <div class="screen-el">Streak Anzeige (dezent)</div>
+          <div class="screen-el">Letzter AI-Response</div>
+          <div class="screen-el">→ History</div>
+        </div>
+      </div>
+      <div class="screen">
+        <div class="screen-name">02 — Aufnahme</div>
+        <div class="screen-elements">
+          <div class="screen-el primary">Waveform Animation</div>
+          <div class="screen-el primary">Timer (max 90s)</div>
+          <div class="screen-el">Live Transkription</div>
+          <div class="screen-el">Abbrechen / Fertig</div>
+        </div>
+      </div>
+      <div class="screen">
+        <div class="screen-name">03 — AI Response</div>
+        <div class="screen-elements">
+          <div class="screen-el primary">AI Antwort (3–4 Sätze)</div>
+          <div class="screen-el">Tagesthema erkennt</div>
+          <div class="screen-el">Frage für morgen</div>
+          <div class="screen-el primary">→ Weiter</div>
+        </div>
+      </div>
+      <div class="screen">
+        <div class="screen-name">04 — History</div>
+        <div class="screen-elements">
+          <div class="screen-el">Timeline (Kalender)</div>
+          <div class="screen-el">Eintrag antippen → Details</div>
+          <div class="screen-el">AI Zusammenfassung</div>
+          <div class="screen-el">Themen-Tags</div>
+          <div class="screen-el">Suche</div>
+        </div>
+      </div>
+      <div class="screen">
+        <div class="screen-name">05 — Insights</div>
+        <div class="screen-elements">
+          <div class="screen-el primary">Wöchentliche Muster</div>
+          <div class="screen-el primary">Energie-Chart</div>
+          <div class="screen-el">Top-Themen</div>
+          <div class="screen-el">Redestil-Hinweise</div>
+          <div class="screen-el">[PREMIUM GATE]</div>
+        </div>
+      </div>
+      <div class="screen">
+        <div class="screen-name">06 — Settings</div>
+        <div class="screen-elements">
+          <div class="screen-el">Notification Zeit</div>
+          <div class="screen-el">Datenschutz-Einstellungen</div>
+          <div class="screen-el primary">Alle Daten löschen</div>
+          <div class="screen-el">Export (PDF/JSON)</div>
+          <div class="screen-el">Account / Abo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-success">
+      <div class="alert-icon">✅</div>
+      <div class="alert-content">
+        <div class="alert-title">Design-Prinzip: Weniger ist mehr</div>
+        <div class="alert-text">Kein Gamification-Junk auf dem Home-Screen. Keine Score-Zahlen die Angst machen. Der Streak ist klein und dezent — er soll motivieren, nicht bestrafen. Die App soll sich anfühlen wie ein ruhiger, intelligenter Gesprächspartner — nicht wie eine To-Do-Liste.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 7. AI MODELL ─── -->
+  <section class="section" id="ai">
+    <div class="section-header">
+      <span class="section-number">07</span>
+      <div>
+        <div class="section-title">AI-Modell & Verhaltensanalyse</div>
+        <div class="section-subtitle">Wie der AI den Nutzer kennenlernt — technisch und ethisch</div>
+      </div>
+    </div>
+
+    <h2>Was das AI-Modell intern aufbaut</h2>
+
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <span class="card-icon">🎭</span>
+        <h3>Charakterprofil</h3>
+        <p>Aus Sprachmustern erkennt der AI: Ist der Nutzer impulsiv oder analytisch? Wie reagiert er auf Stress? Welche Themen tauchen unter Druck auf? — Nie direkt kommuniziert, aber verwendet um bessere Fragen zu stellen.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🗣️</span>
+        <h3>Redestil-Muster</h3>
+        <p>Formuliert er direkt oder vermeidend? Emotional oder sachlich? Diese Muster werden in Insights eingebaut: "Wenn du müde bist, wirst du in deiner Kommunikation merklich kürzer."</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📊</span>
+        <h3>Verhaltensmuster</h3>
+        <p>Zu welchen Tageszeiten ist er energetischer? Welche Entscheidungen bereut er häufig? Wo weicht er von seinen eigenen Zielen ab? — Ehrliche Muster, keine Wertung.</p>
+      </div>
+    </div>
+
+    <h2>AI-Prompt-Architektur</h2>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
+        </div>
+        <div class="code-title">System Prompt — Basis (vereinfacht)</div>
+      </div>
+      <pre><span class="cm">// MirrorMind AI System Prompt</span>
+<span class="cm">// Dieser Prompt wird NIEMALS mit Rohdaten des Nutzers befüllt.</span>
+<span class="cm">// Nur anonymisierte Themen und AI-generierte Zusammenfassungen.</span>
+
+<span class="str">Du bist MirrorMind — ein persönlicher AI-Begleiter.</span>
+<span class="str">Deine Aufgabe ist ehrliches, respektvolles Zuhören und Spiegeln.</span>
+
+<span class="kw">REGELN:</span>
+<span class="str">- Antworte in 3–4 Sätzen. Nie länger.</span>
+<span class="str">- Beginne nie mit "Ich verstehe" oder generischen Floskeln.</span>
+<span class="str">- Stelle am Ende genau EINE Folgefrage — nie mehrere.</span>
+<span class="str">- Gib keine medizinischen Ratschläge. Empfehle bei Bedarf Fachpersonen.</span>
+<span class="str">- Manipuliere nie. Erzeuge kein schlechtes Gewissen.</span>
+<span class="str">- Tone: warmherzig, direkt, ehrlich. Nie therapistisch, nie patronisierend.</span>
+
+<span class="kw">KONTEXT DIESER SESSION:</span>
+<span class="prop">Letzte 3 Themen (anonymisiert):</span> <span class="num">[topics]</span>
+<span class="prop">Energie-Trend heute:</span> <span class="num">[energy_level]</span>  
+<span class="prop">Tage aktiv:</span> <span class="num">[streak_days]</span></pre>
+    </div>
+
+    <div class="alert alert-warning">
+      <div class="alert-icon">🛡️</div>
+      <div class="alert-content">
+        <div class="alert-title">Kritische Sicherheitsregel</div>
+        <div class="alert-text">Der System Prompt erhält NIEMALS Rohdaten des Nutzers (wörtliche Aussagen, Namen, konkrete Ereignisse). Nur anonymisierte Themen-Tags und Energie-Scores. Das schützt vor unbeabsichtigtem Datentransfer zur API.</div>
+      </div>
+    </div>
+
+    <h2>Warum Groq für die MVP</h2>
+    <ul class="spec-list">
+      <li><strong>Kostenlos</strong> bis zu 14.400 API-Calls pro Tag — reicht für tausende Nutzer in der Early-Phase</li>
+      <li><strong>Llama 3.1 (70B)</strong> ist qualitativ gut genug für kurze, empathische Antworten</li>
+      <li><strong>Latenz unter 1 Sekunde</strong> — fühlt sich sofortig an, nicht wie eine Anfrage die verarbeitet wird</li>
+      <li><strong>Einfacher API-Wechsel</strong> — wenn Groq zu teuer wird, ist der Switch auf Claude API oder OpenAI ein Tag Arbeit</li>
+    </ul>
+  </section>
+
+  <!-- ─── 8. DATENSCHUTZ ─── -->
+  <section class="section" id="privacy">
+    <div class="section-header">
+      <span class="section-number">08</span>
+      <div>
+        <div class="section-title">Datenschutz & DSGVO</div>
+        <div class="section-subtitle">Vertrauen als technische Implementierung — nicht als Marketing-Versprechen</div>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <div class="alert-icon">🏗️</div>
+      <div class="alert-content">
+        <div class="alert-title">Architektur-Ansatz C — Hybrid Local/Cloud</div>
+        <div class="alert-text">Rohdaten (Transkriptionen, Voice-Aufnahmen, wörtliche Check-ins) bleiben <strong>lokal auf dem Gerät</strong> in SwiftData. In die Cloud gehen nur AI-generierte Zusammenfassungen und anonymisierte Themen-Tags — niemals die Rohdaten selbst.</div>
+      </div>
+    </div>
+
+    <div class="privacy-grid">
+      <div class="privacy-card local">
+        <div class="privacy-card-title">📱 Lokal (SwiftData)</div>
+        <div class="privacy-item"><span>→</span> Vollständige Transkriptionen</div>
+        <div class="privacy-item"><span>→</span> Voice-Aufnahmen (temporär)</div>
+        <div class="privacy-item"><span>→</span> Rohe Check-in-Texte</div>
+        <div class="privacy-item"><span>→</span> Vollständige Konversationshistory</div>
+        <div class="privacy-item"><span>→</span> Persönliche Details (Namen, Orte)</div>
+        <div class="privacy-item"><span>→</span> Verhaltens-Profil (lokal generiert)</div>
+      </div>
+      <div class="privacy-card cloud">
+        <div class="privacy-card-title">☁️ Cloud (Supabase — EU)</div>
+        <div class="privacy-item"><span>→</span> Anonymisierte Themen-Tags</div>
+        <div class="privacy-item"><span>→</span> Energie-Scores (1–5)</div>
+        <div class="privacy-item"><span>→</span> Streak-Counter</div>
+        <div class="privacy-item"><span>→</span> AI-generierte Wochenzusammenfassung</div>
+        <div class="privacy-item"><span>→</span> Account-Metadaten (Email, Created At)</div>
+        <div class="privacy-item"><span>→</span> Abo-Status</div>
+      </div>
+    </div>
+
+    <h2>DSGVO-Checkliste — vollständig</h2>
+
+    <table class="feature-table">
+      <thead>
+        <tr>
+          <th>Anforderung</th>
+          <th>Umsetzung</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Explizite Einwilligung</strong></td>
+          <td>Aktiver Toggle beim Onboarding. Kein Pre-Checked. Klare Sprache, kein Juristendeutsch.</td>
+          <td><span class="badge badge-tech">Implementieren</span></td>
+        </tr>
+        <tr>
+          <td><strong>Recht auf Auskunft</strong></td>
+          <td>Export-Funktion gibt alle gespeicherten Daten als JSON/PDF aus. Immer erreichbar in Settings.</td>
+          <td><span class="badge badge-tech">Implementieren</span></td>
+        </tr>
+        <tr>
+          <td><strong>Recht auf Löschung</strong></td>
+          <td>Ein Button in Settings. Löscht alle lokalen Daten + Cloud-Daten sofort und unwiderruflich. Funktioniert technisch, nicht nur optisch.</td>
+          <td><span class="badge badge-tech">Implementieren</span></td>
+        </tr>
+        <tr>
+          <td><strong>Datensparsamkeit</strong></td>
+          <td>Kein Tracking, kein Analytics, keine Third-Party-SDKs die Daten sammeln. PostHog nur mit anonymer ID wenn überhaupt.</td>
+          <td><span class="badge badge-tech">Implementieren</span></td>
+        </tr>
+        <tr>
+          <td><strong>Serverstandort EU</strong></td>
+          <td>Supabase Frankfurt-Region. Muss beim Projekt-Setup aktiv gewählt werden.</td>
+          <td><span class="badge badge-tech">Implementieren</span></td>
+        </tr>
+        <tr>
+          <td><strong>Kein Training auf Nutzerdaten</strong></td>
+          <td>Explizites vertragliches Verbot. Groq API Terms prüfen — aktuell kein Training auf API-Daten.</td>
+          <td><span class="badge badge-tech">Prüfen</span></td>
+        </tr>
+        <tr>
+          <td><strong>Datenschutzerklärung</strong></td>
+          <td>Muss vor Launch vollständig und rechtskonform vorliegen. In App verlinkt + auf Website.</td>
+          <td><span class="badge badge-tech">Erstellen</span></td>
+        </tr>
+        <tr>
+          <td><strong>Minderjährigenschutz</strong></td>
+          <td>App Store Rating 12+. Keine bewusste Werbung an unter 16-Jährige.</td>
+          <td><span class="badge badge-tech">App Store Setup</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ─── 9. MONETARISIERUNG ─── -->
+  <section class="section" id="monetization">
+    <div class="section-header">
+      <span class="section-number">09</span>
+      <div>
+        <div class="section-title">Monetarisierung</div>
+        <div class="section-subtitle">Wie die App Geld verdient — ohne die Nutzer zu verkaufen</div>
+      </div>
+    </div>
+
+    <div class="comparison">
+      <div class="comparison-col">
+        <div class="comparison-header free">
+          <div class="comparison-plan">Free</div>
+          <div class="comparison-price">Kostenlos — immer</div>
+        </div>
+        <div class="comparison-items">
+          <div class="comparison-item"><span class="check">✓</span> Täglich eine personalisierte Frage</div>
+          <div class="comparison-item"><span class="check">✓</span> Voice & Text Check-in</div>
+          <div class="comparison-item"><span class="check">✓</span> AI-Antwort nach jedem Check-in</div>
+          <div class="comparison-item"><span class="check">✓</span> 30 Tage History</div>
+          <div class="comparison-item"><span class="check">✓</span> Daten-Export (PDF/JSON)</div>
+          <div class="comparison-item"><span class="check">✓</span> Vollständige Datenkontrolle</div>
+          <div class="comparison-item"><span class="cross">✗</span> Wöchentliche Pattern-Analyse</div>
+          <div class="comparison-item"><span class="cross">✗</span> Monats-Report (Wrapped)</div>
+          <div class="comparison-item"><span class="cross">✗</span> Unbegrenzte History</div>
+          <div class="comparison-item"><span class="cross">✗</span> Redestil-Analyse</div>
+          <div class="comparison-item"><span class="cross">✗</span> Cloud-Backup (verschlüsselt)</div>
+        </div>
+      </div>
+      <div class="comparison-col">
+        <div class="comparison-header premium">
+          <div class="comparison-plan">Premium</div>
+          <div class="comparison-price">4,99 €/Monat · 39,99 €/Jahr</div>
+        </div>
+        <div class="comparison-items">
+          <div class="comparison-item"><span class="check">✓</span> Alles aus Free</div>
+          <div class="comparison-item"><span class="check">✓</span> Wöchentliche Pattern-Analyse</div>
+          <div class="comparison-item"><span class="check">✓</span> Monats-Report (Wrapped)</div>
+          <div class="comparison-item"><span class="check">✓</span> Unbegrenzte History</div>
+          <div class="comparison-item"><span class="check">✓</span> Redestil-Analyse</div>
+          <div class="comparison-item"><span class="check">✓</span> Charakterprofil-Insights</div>
+          <div class="comparison-item"><span class="check">✓</span> Verschlüsseltes Cloud-Backup</div>
+          <div class="comparison-item"><span class="check">✓</span> Mehrere Check-ins pro Tag</div>
+          <div class="comparison-item"><span class="check">✓</span> Priority API (schnellere Antworten)</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Warum dieser Preis</h2>
+    <p>4,99 €/Monat ist der süße Spot für Apps die echten Wert liefern aber nicht einschüchtern. Netflix kostet 17 €. Ein Kaffee kostet 3,50 €. Für "etwas das mir wöchentlich Dinge über mich zeigt die ich nicht wusste" zahlt die Zielgruppe gerne 5 €. Der Jahrespreis (39,99 €) erzeugt Commitment und senkt Churn erheblich.</p>
+
+    <h2>Unit Economics — realistisch</h2>
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <span class="card-icon">🎯</span>
+        <h3>Conversion Rate</h3>
+        <p>Realistisch: <strong>4–8%</strong> der aktiven Free-Nutzer upgraden. Apps mit echtem Wert und fairen Preisen liegen hier. Manipulative Apps kurzzeitig höher, aber mit mehr Churn.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📉</span>
+        <h3>Churn Rate</h3>
+        <p>Ziel: <strong>unter 5% monatlich</strong>. Erreichbar weil Daten nicht portierbar sind und die App mit der Zeit wertvoller wird. Marktdurchschnitt bei Habit-Apps: 15–20%.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">💰</span>
+        <h3>Break-Even</h3>
+        <p>Bei <strong>200 Premium-Nutzern</strong> (à 4,99 €): ~1.000 €/Monat. API-Kosten bei dem Volumen: unter 50 €. Serverkosten (Supabase): 25 €. Apple-Provision: 30%. <strong>Netto: ~670 €/Monat.</strong></p>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <div class="alert-icon">📌</div>
+      <div class="alert-content">
+        <div class="alert-title">Keine Ads — nie</div>
+        <div class="alert-text">Werbung würde das Vertrauensmodell dieser App zerstören. Wenn der Nutzer merkt dass seine persönlichsten Gedanken für Ad-Targeting verwendet werden — auch nur indirekt — ist er weg. Für immer. Das Subscription-Modell ist nicht nur ethischer, es ist auch wirtschaftlich sinnvoller: Ein Premium-Nutzer ist mehr wert als 1.000 Ad-Impressions.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 10. RETENTION ─── -->
+  <section class="section" id="retention">
+    <div class="section-header">
+      <span class="section-number">10</span>
+      <div>
+        <div class="section-title">Retention-Strategie</div>
+        <div class="section-subtitle">Warum Nutzer die App in einem Jahr noch haben</div>
+      </div>
+    </div>
+
+    <h2>Die drei ehrlichen Retention-Mechanismen</h2>
+
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <span class="card-icon">🔮</span>
+        <h3>Compounding Value</h3>
+        <p>Tag 1: Die App kennt dich kaum. Tag 30: Sie kennt dich gut. Tag 90: Sie kennt dich besser als die meisten Menschen in deinem Leben. <strong>Je länger du dabei bist, desto wertvoller wird sie.</strong> Kein anderes Produkt kann das reproduzieren.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📚</span>
+        <h3>Dein Leben ist drin</h3>
+        <p>Nach 6 Monaten sind Entscheidungen, Sorgen, Erfolge, Tiefpunkte alle dokumentiert. Das ist ein persönliches Archiv das man nicht löscht. <strong>Switching Cost ist real</strong> — aber nicht künstlich erzeugt.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📅</span>
+        <h3>Tages-Ritual</h3>
+        <p>Die Morgen-Notification mit der personalisierten Frage wird zum Ritual. Wie Kaffee oder Zähneputzen. Nicht weil die App es erzwingt, sondern weil die Qualität der Fragen das Gehirn wirklich interessiert.</p>
+      </div>
+    </div>
+
+    <h2>Was wir ausdrücklich NICHT machen</h2>
+    <ul class="spec-list">
+      <li>Kein Streak-Verlust der schlechtes Gewissen erzeugt ("Du hast deinen 47-Tage-Streak verloren!")</li>
+      <li>Keine Angst-basierten Notifications ("Deine Daten werden gelöscht wenn du heute nicht einchecks!")</li>
+      <li>Keine künstliche Variable-Reward-Mechanik die Sucht erzeugt</li>
+      <li>Kein Feature-Entzug wenn das Abo ausläuft — 7 Tage Grace Period, danach nur keine neuen Insights</li>
+    </ul>
+
+    <div class="alert alert-success">
+      <div class="alert-icon">🎯</div>
+      <div class="alert-content">
+        <div class="alert-title">Der Viral-Mechanismus: Der Monats-Report</div>
+        <div class="alert-text">Der Monats-Report (Wrapped) ist das einzige wirklich virale Element. Nutzer teilen ihn weil sie stolz darauf sind — nicht weil wir sie dazu bringen. "Mein AI sagt ich habe im Oktober 73% der Zeit über Arbeit nachgedacht aber nur 12% über mich selbst." Das ist teilbar. Das ist ehrlich. Das erzeugt organisches Wachstum ohne Werbebudget.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 11. TECH STACK ─── -->
+  <section class="section" id="tech">
+    <div class="section-header">
+      <span class="section-number">11</span>
+      <div>
+        <div class="section-title">Tech Stack</div>
+        <div class="section-subtitle">Jede Technologie-Entscheidung begründet — und was sie kostet</div>
+      </div>
+    </div>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <span class="stack-icon">🍎</span>
+        <div class="stack-name">SwiftUI</div>
+        <div class="stack-role">UI Framework</div>
+        <div class="stack-cost"><span class="badge badge-free">0 €</span></div>
+      </div>
+      <div class="stack-item">
+        <span class="stack-icon">💾</span>
+        <div class="stack-name">SwiftData</div>
+        <div class="stack-role">Lokale Persistenz</div>
+        <div class="stack-cost"><span class="badge badge-free">0 €</span></div>
+      </div>
+      <div class="stack-item">
+        <span class="stack-icon">🎙️</span>
+        <div class="stack-name">Apple Speech</div>
+        <div class="stack-role">Lokale Transkription</div>
+        <div class="stack-cost"><span class="badge badge-free">0 €</span></div>
+      </div>
+      <div class="stack-item">
+        <span class="stack-icon">🔔</span>
+        <div class="stack-name">UserNotifications</div>
+        <div class="stack-role">Push Notifications</div>
+        <div class="stack-cost"><span class="badge badge-free">0 €</span></div>
+      </div>
+      <div class="stack-item">
+        <span class="stack-icon">⚡</span>
+        <div class="stack-name">Groq API</div>
+        <div class="stack-role">AI-Antworten (LLM)</div>
+        <div class="stack-cost"><span class="badge badge-free">0 € (Free Tier)</span></div>
+      </div>
+      <div class="stack-item">
+        <span class="stack-icon">🗄️</span>
+        <div class="stack-name">Supabase</div>
+        <div class="stack-role">Cloud DB + Auth (EU)</div>
+        <div class="stack-cost"><span class="badge badge-free">0 € (Free Tier)</span></div>
+      </div>
+      <div class="stack-item">
+        <span class="stack-icon">💳</span>
+        <div class="stack-name">StoreKit 2</div>
+        <div class="stack-role">Subscription Management</div>
+        <div class="stack-cost"><span class="badge badge-free">0 €</span></div>
+      </div>
+      <div class="stack-item">
+        <span class="stack-icon">🔐</span>
+        <div class="stack-name">CryptoKit</div>
+        <div class="stack-role">Client-side Verschlüsselung</div>
+        <div class="stack-cost"><span class="badge badge-free">0 €</span></div>
+      </div>
+    </div>
+
+    <div class="alert alert-success">
+      <div class="alert-icon">🚀</div>
+      <div class="alert-content">
+        <div class="alert-title">Total Cost to Launch: 0 €</div>
+        <div class="alert-text">Alle benötigten Technologien sind entweder kostenlos oder haben ein Free Tier das für die MVP-Phase ausreicht. Erst wenn die App Nutzer und Umsatz hat entstehen skalierbare Kosten — und dann sind die durch den Umsatz gedeckt. Apple Developer Account (99 €/Jahr) ist der einzige zwingend notwendige Kostenpunkt.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 12. ARCHITEKTUR ─── -->
+  <section class="section" id="architecture">
+    <div class="section-header">
+      <span class="section-number">12</span>
+      <div>
+        <div class="section-title">Technische Architektur</div>
+        <div class="section-subtitle">Wie die App intern aufgebaut ist</div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
+        </div>
+        <div class="code-title">Projektstruktur / Swift Package</div>
+      </div>
+      <pre><span class="fn">MirrorMind/</span>
+├── <span class="fn">App/</span>
+│   ├── <span class="prop">MirrorMindApp.swift</span>         <span class="cm">// Entry point</span>
+│   └── <span class="prop">ContentView.swift</span>
+│
+├── <span class="fn">Models/</span>                          <span class="cm">// SwiftData Models</span>
+│   ├── <span class="prop">CheckIn.swift</span>               <span class="cm">// Lokaler Check-in Eintrag</span>
+│   ├── <span class="prop">AIResponse.swift</span>            <span class="cm">// AI Antwort (lokal gecacht)</span>
+│   ├── <span class="prop">BehaviorProfile.swift</span>       <span class="cm">// Lokal generiertes Profil</span>
+│   └── <span class="prop">UserSettings.swift</span>
+│
+├── <span class="fn">Views/</span>
+│   ├── <span class="prop">HomeView.swift</span>              <span class="cm">// Tagesfrage + Record Button</span>
+│   ├── <span class="prop">RecordingView.swift</span>         <span class="cm">// Voice Recording Interface</span>
+│   ├── <span class="prop">AIResponseView.swift</span>        <span class="cm">// AI Antwort anzeigen</span>
+│   ├── <span class="prop">HistoryView.swift</span>           <span class="cm">// Kalender + Timeline</span>
+│   ├── <span class="prop">InsightsView.swift</span>          <span class="cm">// Pattern Report (Premium)</span>
+│   └── <span class="prop">SettingsView.swift</span>
+│
+├── <span class="fn">ViewModels/</span>                      <span class="cm">// MVVM Pattern</span>
+│   ├── <span class="prop">HomeViewModel.swift</span>
+│   ├── <span class="prop">RecordingViewModel.swift</span>
+│   └── <span class="prop">InsightsViewModel.swift</span>
+│
+├── <span class="fn">Services/</span>
+│   ├── <span class="prop">SpeechService.swift</span>         <span class="cm">// Apple Speech Framework</span>
+│   ├── <span class="prop">AIService.swift</span>             <span class="cm">// Groq API Integration</span>
+│   ├── <span class="prop">SupabaseService.swift</span>       <span class="cm">// Cloud Sync (nur Summaries)</span>
+│   ├── <span class="prop">EncryptionService.swift</span>     <span class="cm">// CryptoKit Wrapper</span>
+│   ├── <span class="prop">NotificationService.swift</span>   <span class="cm">// Morgen-Push Scheduling</span>
+│   └── <span class="prop">SubscriptionService.swift</span>   <span class="cm">// StoreKit 2</span>
+│
+├── <span class="fn">AI/</span>
+│   ├── <span class="prop">PromptBuilder.swift</span>         <span class="cm">// Anonymisierte Prompts erstellen</span>
+│   ├── <span class="prop">BehaviorAnalyzer.swift</span>      <span class="cm">// Lokale Pattern-Erkennung</span>
+│   └── <span class="prop">ThemeExtractor.swift</span>        <span class="cm">// Themen-Tags aus Text</span>
+│
+└── <span class="fn">Utils/</span>
+    ├── <span class="prop">PrivacyGuard.swift</span>          <span class="cm">// PII-Filter vor API-Calls</span>
+    └── <span class="prop">ExportService.swift</span>         <span class="cm">// PDF/JSON Export</span></pre>
+    </div>
+
+    <h2>Datenfluss — für einen Check-in</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
+          <div class="code-dot"></div>
+        </div>
+        <div class="code-title">Datenfluss — Sicherheitsebenen</div>
+      </div>
+      <pre><span class="cm">// SCHRITT 1: Nutzer spricht (Voice Input)</span>
+<span class="fn">SpeechService</span>.<span class="prop">transcribe</span>(audio) → <span class="str">rawTranscript: String</span>
+<span class="cm">// ⚡ rawTranscript verlässt NIE das Gerät</span>
+
+<span class="cm">// SCHRITT 2: Lokal speichern</span>
+<span class="fn">SwiftData</span>.<span class="prop">save</span>(<span class="fn">CheckIn</span>(rawText: rawTranscript, timestamp: now))
+
+<span class="cm">// SCHRITT 3: Themen extrahieren (lokal)</span>
+<span class="str">anonymizedThemes</span> = <span class="fn">ThemeExtractor</span>.<span class="prop">extract</span>(rawTranscript)
+<span class="cm">// z.B. ["Arbeit", "Stress", "Gespräch"] — keine Namen, keine Details</span>
+
+<span class="cm">// SCHRITT 4: Prompt bauen (nur anonymisierte Daten)</span>
+<span class="str">prompt</span> = <span class="fn">PromptBuilder</span>.<span class="prop">build</span>(
+    themes: anonymizedThemes,
+    energyLevel: <span class="num">3</span>,
+    streakDays: <span class="num">14</span>
+)
+<span class="cm">// ⚡ Kein rawTranscript im Prompt</span>
+
+<span class="cm">// SCHRITT 5: Groq API Call</span>
+<span class="str">aiResponse</span> = <span class="kw">await</span> <span class="fn">AIService</span>.<span class="prop">generate</span>(prompt)
+
+<span class="cm">// SCHRITT 6: Response lokal speichern + anzeigen</span>
+<span class="fn">SwiftData</span>.<span class="prop">save</span>(<span class="fn">AIResponse</span>(text: aiResponse, checkInId: checkIn.id))
+
+<span class="cm">// SCHRITT 7: Nur Metadaten in Cloud (PREMIUM)</span>
+<span class="kw">if</span> isPremium {
+    <span class="fn">SupabaseService</span>.<span class="prop">sync</span>(<span class="fn">CloudSummary</span>(
+        themes: anonymizedThemes,
+        energyScore: <span class="num">3</span>,
+        date: today
+    ))
+}</pre>
+    </div>
+  </section>
+
+  <!-- ─── 13. ROADMAP ─── -->
+  <section class="section" id="roadmap">
+    <div class="section-header">
+      <span class="section-number">13</span>
+      <div>
+        <div class="section-title">Entwicklungs-Roadmap</div>
+        <div class="section-subtitle">Von der ersten Zeile Code bis zum ersten Premium-Nutzer</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Phase 1 — Woche 1–2</div>
+        <div class="timeline-title">Fundament</div>
+        <div class="timeline-desc">SwiftData Setup, MVVM-Struktur anlegen, Apple Speech Integration testen, Groq API testen. Ziel: Voice aufnehmen → Text → AI-Antwort. Kein UI, nur die Kette funktioniert.</div>
+        <span class="timeline-duration">2 Wochen</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Phase 2 — Woche 3–4</div>
+        <div class="timeline-title">Core MVP</div>
+        <div class="timeline-desc">HomeView, RecordingView, AIResponseView bauen. Lokale Datenspeicherung. Push Notifications scheduling. PromptBuilder mit Anonymisierung. Erster interner Testflight-Build.</div>
+        <span class="timeline-duration">2 Wochen</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Phase 3 — Woche 5–6</div>
+        <div class="timeline-title">Datenschutz & Auth</div>
+        <div class="timeline-desc">Supabase Integration (nur Metadaten). Apple Sign-In. DSGVO Onboarding. Datenlöschung implementieren. Export-Funktion. Datenschutzerklärung fertigstellen.</div>
+        <span class="timeline-duration">2 Wochen</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Phase 4 — Woche 7–8</div>
+        <div class="timeline-title">Premium & Launch</div>
+        <div class="timeline-desc">StoreKit 2 Integration. HistoryView. Insights Teaser (Free) vs. vollständig (Premium). App Store Listing vorbereiten. Screenshots, Beschreibung, Datenschutz-URL. TestFlight Beta mit 20–50 echten Nutzern.</div>
+        <span class="timeline-duration">2 Wochen</span>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-phase">Phase 5 — Monat 3</div>
+        <div class="timeline-title">Growth & Iteration</div>
+        <div class="timeline-desc">Erster Monats-Report (Wrapped) implementieren. Feedback aus Beta einarbeiten. Redestil-Analyse. Erste Marketing-Tests (organisch: Reddit, ProductHunt, App Store Optimierung). Ziel: 500 Downloads, 25 Premium-Nutzer.</div>
+        <span class="timeline-duration">4 Wochen</span>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <div class="alert-icon">🎯</div>
+      <div class="alert-content">
+        <div class="alert-title">Definition of Done — MVP</div>
+        <div class="alert-text">Die MVP ist fertig wenn: (1) Ein Nutzer in 5 Minuten von Download zu erstem Check-in kommt. (2) Die App eine Woche täglich funktioniert ohne Crash. (3) Der Datenschutz vollständig implementiert ist — nicht nur versprochen. (4) StoreKit funktioniert und Zahlungen werden verarbeitet. Alles andere ist Phase 2.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-brand">MirrorMind</div>
+    <div class="footer-copy">PRD v1.0 — Pre-Development · Erstellt mit Claude AI · 2026</div>
+  </div>
+
+</main>
+
+<script>
+  // Progress Bar
+  window.addEventListener('scroll', () => {
+    const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    document.getElementById('progressBar').style.width = scrolled + '%';
+  });
+
+  // Intersection Observer für Section Animations
+  const sections = document.querySelectorAll('.section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px -50px 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Active Nav Item
+  const navItems = document.querySelectorAll('.nav-item');
+  const sectionEls = document.querySelectorAll('section[id]');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sectionEls.forEach(section => {
+      const top = section.offsetTop - 100;
+      if (window.scrollY >= top) current = section.id;
+    });
+
+    navItems.forEach(item => {
+      item.classList.remove('active');
+      if (item.getAttribute('href') === '#' + current) {
+        item.classList.add('active');
+      }
+    });
+  });
+
+  // Smooth scroll für Nav
+  navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(item.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>
